@@ -1,0 +1,333 @@
+@import "tailwindcss";
+
+/* ----------------------------------------------------------------------------
+   Design tokens. Everything below is the single source of truth for the brand;
+   components reference these through Tailwind utilities (bg-ink, text-display…).
+   ------------------------------------------------------------------------- */
+@theme {
+  --color-*: initial;
+  --color-ink: #0b0b0b;
+  --color-graphite: #202020;
+  --color-ivory: #f5f2ec;
+  --color-ember: #ff6a00;
+  --color-coral: #ff4d2e;
+  --color-rust: #a8300c;
+  --color-amber: #ffb56b;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  --font-display: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  /* Fluid editorial type scale. */
+  --text-label: 0.75rem;
+  --text-label--line-height: 1.4;
+  --text-label--letter-spacing: 0.14em;
+  --text-lede: clamp(1.125rem, 0.95rem + 0.75vw, 1.625rem);
+  --text-lede--line-height: 1.4;
+  --text-heading: clamp(1.75rem, 1.2rem + 2.2vw, 3.25rem);
+  --text-heading--line-height: 1.04;
+  --text-heading--letter-spacing: -0.022em;
+  --text-display: clamp(2.5rem, 1.1rem + 4.6vw, 6rem);
+  --text-display--line-height: 1;
+  --text-display--letter-spacing: -0.028em;
+
+  --spacing-gutter: clamp(1.25rem, 0.75rem + 2.2vw, 3rem);
+  --spacing-section: clamp(7rem, 4.5rem + 10vw, 15rem);
+  --container-site: 110rem;
+  --container-prose: 40rem;
+
+  --radius-xs: 2px;
+  --radius-md: 6px;
+  --radius-pill: 999px;
+
+  --ease-studio: cubic-bezier(0.2, 0.7, 0.1, 1);
+  --duration-fast: 200ms;
+  --duration-base: 450ms;
+  --duration-slow: 900ms;
+
+  --breakpoint-xs: 26rem;
+
+  --animate-line-rise: line-rise 1100ms var(--ease-studio) both;
+  --animate-fade-rise: fade-rise 900ms var(--ease-studio) both;
+  --animate-disc-rise: disc-rise 1800ms var(--ease-studio) both;
+  --animate-page-in: page-in 380ms ease-out both;
+  --animate-menu-in: menu-in 420ms var(--ease-studio) both;
+  --animate-menu-out: menu-out 240ms ease-in both;
+
+  @keyframes line-rise {
+    from { transform: translateY(105%); }
+    to { transform: translateY(0); }
+  }
+  @keyframes fade-rise {
+    from { opacity: 0; transform: translateY(0.75rem); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes disc-rise {
+    from { opacity: 0; transform: translateY(14%) scale(0.92); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes page-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes menu-in {
+    from { clip-path: circle(0% at calc(100% - 3rem) 2.5rem); }
+    to { clip-path: circle(150% at calc(100% - 3rem) 2.5rem); }
+  }
+  @keyframes menu-out {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+}
+
+@layer base {
+  html {
+    background: var(--color-ink);
+    color: var(--color-ivory);
+    font-family: var(--font-sans);
+    font-optical-sizing: auto;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    scroll-behavior: smooth;
+    scroll-padding-top: 6rem;
+  }
+
+  body {
+    min-height: 100svh;
+    overflow-x: clip;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background: var(--color-ember);
+    color: var(--color-ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-ember);
+    outline-offset: 3px;
+    border-radius: var(--radius-xs);
+  }
+
+  /* Orange focus rings disappear against orange surfaces. */
+  [data-surface="ember"] :focus-visible {
+    outline-color: var(--color-ink);
+  }
+}
+
+@layer components {
+  /* Printed grain. A small static tile, not a live filter, so it costs nothing to paint. */
+  .grain::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    pointer-events: none;
+    background: url("/textures/grain.png") repeat;
+    background-size: 240px 240px;
+    opacity: 0.055;
+  }
+
+  /* Colour fields have no edges. Each is a masked layer that bleeds past its section,
+     dissolving into the ink canvas inside the section padding, where no text sits.
+     Text starts one section-space in; the field is opaque by 0.5 of that. */
+  .band {
+    --band-bleed: calc(var(--spacing-section) * 0.45);
+    --band-fade: calc(var(--spacing-section) * 0.7);
+    position: relative;
+    isolation: isolate;
+  }
+
+  .band::before {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    top: calc(var(--band-bleed) * -1);
+    bottom: calc(var(--band-bleed) * -1);
+    z-index: -1;
+    background: var(--band-color);
+    pointer-events: none;
+    /* Smoothstep, so the fade has no visible start or end. */
+    --stops: rgb(0 0 0 / 0.000) calc(var(--band-fade) * 0), rgb(0 0 0 / 0.028) calc(var(--band-fade) * 0.1), rgb(0 0 0 / 0.104) calc(var(--band-fade) * 0.2), rgb(0 0 0 / 0.216) calc(var(--band-fade) * 0.3), rgb(0 0 0 / 0.352) calc(var(--band-fade) * 0.4), rgb(0 0 0 / 0.500) calc(var(--band-fade) * 0.5), rgb(0 0 0 / 0.648) calc(var(--band-fade) * 0.6), rgb(0 0 0 / 0.784) calc(var(--band-fade) * 0.7), rgb(0 0 0 / 0.896) calc(var(--band-fade) * 0.8), rgb(0 0 0 / 0.972) calc(var(--band-fade) * 0.9), rgb(0 0 0 / 1.000) calc(var(--band-fade) * 1);
+    mask-image: linear-gradient(to bottom, var(--stops)), linear-gradient(to top, var(--stops));
+    mask-composite: intersect;
+    -webkit-mask-composite: source-in;
+  }
+
+  /* The signature orange only reaches 2.6:1 on ivory. This near-identical shade clears
+     the 3:1 needed for large text; it is for type, never the logo. */
+  .band-ivory,
+  .on-ivory {
+    --color-ember: #e25500;
+    color-scheme: light;
+  }
+
+  .band-ivory {
+    --band-color: var(--color-ivory);
+    color: var(--color-ink);
+  }
+
+  .band-graphite {
+    --band-color: var(--color-graphite);
+  }
+
+  /* For full-bleed images: same dissolve, top and bottom. */
+  .soft-edges {
+    --stops: transparent 0, rgb(0 0 0 / 0.3) 7%, rgb(0 0 0 / 0.8) 15%, #000 22%;
+    mask-image: linear-gradient(to bottom, var(--stops)), linear-gradient(to top, var(--stops));
+    mask-composite: intersect;
+    -webkit-mask-composite: source-in;
+  }
+
+  .seam-ember {
+    background: linear-gradient(to bottom, color-mix(in srgb, rgb(255 77 46 / 1.000) 0%, rgb(255 106 0 / 1.000)) 0%, color-mix(in srgb, rgb(255 77 46 / 0.972) 7%, rgb(255 106 0 / 0.972)) 10%, color-mix(in srgb, rgb(255 77 46 / 0.896) 14%, rgb(255 106 0 / 0.896)) 20%, color-mix(in srgb, rgb(255 77 46 / 0.784) 21%, rgb(255 106 0 / 0.784)) 30%, color-mix(in srgb, rgb(255 77 46 / 0.648) 28%, rgb(255 106 0 / 0.648)) 40%, color-mix(in srgb, rgb(255 77 46 / 0.500) 35%, rgb(255 106 0 / 0.500)) 50%, color-mix(in srgb, rgb(255 77 46 / 0.352) 42%, rgb(255 106 0 / 0.352)) 60%, color-mix(in srgb, rgb(255 77 46 / 0.216) 49%, rgb(255 106 0 / 0.216)) 70%, color-mix(in srgb, rgb(255 77 46 / 0.104) 56%, rgb(255 106 0 / 0.104)) 80%, color-mix(in srgb, rgb(255 77 46 / 0.028) 63%, rgb(255 106 0 / 0.028)) 90%, color-mix(in srgb, rgb(255 77 46 / 0.000) 70%, rgb(255 106 0 / 0.000)) 100%);
+  }
+
+  /* The rim of a dark circle lit from behind: bright hairline, then glow falling away
+     outward. --r sets the circle; the mask clears the navigation and fades the ends. */
+  .arc-light {
+    --cx: 12%;
+    --cy: 30%;
+    --r: 62vmax;
+    background: radial-gradient(
+      circle at var(--cx) var(--cy),
+      transparent calc(var(--r) - 0.5px),
+      var(--color-amber) var(--r),
+      var(--color-ember) calc(var(--r) + 0.22vmax),
+      rgb(255 77 46 / 0.62) calc(var(--r) + 1.1vmax),
+      rgb(255 77 46 / 0.3) calc(var(--r) + 4vmax),
+      rgb(255 77 46 / 0.12) calc(var(--r) + 11vmax),
+      rgb(255 77 46 / 0.03) calc(var(--r) + 22vmax),
+      transparent calc(var(--r) + 34vmax)
+    );
+    mask-image: linear-gradient(to bottom, transparent 5rem, #000 14rem, #000 68%, transparent 96%);
+  }
+
+  .arc-page {
+    --cx: 118%;
+    --cy: 8%;
+    --r: 40vmax;
+  }
+
+  /* Heroes: the picture melts into the canvas on the side and edge that meet the type. */
+  .fade-left {
+    mask-image: linear-gradient(to bottom, transparent, #000 40%);
+  }
+
+  @media (min-width: 48rem) {
+    .fade-left {
+      mask-image: linear-gradient(to right, transparent, #000 45%), linear-gradient(to bottom, #000 78%, transparent);
+      mask-composite: intersect;
+      -webkit-mask-composite: source-in;
+    }
+  }
+
+  /* Selected filter pills fill with currentColor, so their label takes the surface colour. */
+  .invert-pill {
+    color: var(--color-ink);
+  }
+
+  .band-ivory .invert-pill {
+    color: var(--color-ivory);
+  }
+
+  .text-outline {
+    color: transparent;
+    -webkit-text-stroke: 1.5px var(--color-ivory);
+  }
+
+  .tick-rule {
+    background-image: linear-gradient(to right, currentColor 1px, transparent 1px);
+    background-size: calc(100% / 12) 100%;
+  }
+}
+
+@layer utilities {
+  .text-pretty-tight {
+    letter-spacing: -0.02em;
+  }
+}
+
+/* Sections veil in and out as they cross the viewport. Scroll-driven CSS runs off the
+   main thread and simply doesn't apply in browsers without it, leaving content sharp. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    :root {
+      --veil-blur: 4px;
+    }
+
+    @media (min-width: 48rem) {
+      :root {
+        --veil-blur: 12px;
+      }
+    }
+
+    .scroll-fade,
+    .scroll-fade-in,
+    .scroll-fade-out {
+      animation-timing-function: linear;
+      animation-timeline: view();
+    }
+
+    .scroll-fade {
+      animation-name: veil-in, veil-out;
+      animation-fill-mode: backwards, forwards;
+      animation-range: cover 0 cover 36vh, cover calc(100% - 30vh) cover 100%;
+    }
+
+    .scroll-fade-in {
+      animation-name: veil-in;
+      animation-fill-mode: backwards;
+      animation-range: cover 0 cover 36vh;
+    }
+
+    .scroll-fade-out {
+      animation-name: veil-out;
+      animation-fill-mode: forwards;
+      animation-range: cover calc(100% - 30vh) cover 100%;
+    }
+  }
+}
+
+@keyframes veil-in {
+  from { opacity: 0; filter: blur(var(--veil-blur)); }
+}
+
+@keyframes veil-out {
+  to { opacity: 0; filter: blur(var(--veil-blur)); }
+}
+
+/* Motion is decoration here; every piece of content must stand without it. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 1ms !important;
+  }
+
+  [data-reveal],
+  [data-scroll-driven] {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+    mask-image: none !important;
+    -webkit-mask-image: none !important;
+  }
+}
